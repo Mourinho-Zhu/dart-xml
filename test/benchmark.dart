@@ -91,11 +91,11 @@ void addBenchmark(XmlBuilder builder, MapEntry<String, String> entry) {
 }
 
 void addMeasure(XmlBuilder builder, String name, double measure,
-    [double? comparison]) {
+    [double? reference]) {
   builder.element('measure', attributes: {'name': name}, nest: () {
     builder.element('time', nest: measure.toStringAsFixed(6));
-    if (comparison != null) {
-      final speedup = percentChange(measure, comparison);
+    if (reference != null) {
+      final speedup = percentChange(reference, measure);
       builder.element('speedup', nest: speedup.toStringAsFixed(2));
     }
   });
