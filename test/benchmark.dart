@@ -65,19 +65,38 @@ final Map<String, String> benchmarks = {
 
 void main() {
   final builder = XmlBuilder();
+  addBenchmarks(builder);
+  print(builder.buildDocument().toXmlString(pretty: true));
+}
+
+void addBenchmarks(XmlBuilder builder) {
   builder.processing('xml', 'version="1.0"');
   builder.element('benchmarks', nest: () {
     for (final entry in benchmarks.entries) {
-      builder.element('measure', attributes: {'name': entry.key}, nest: () {
-        final source = entry.value;
-        final parser = benchmark(() => XmlDocument.parse(source));
-        final events = benchmark(() => parseEvents(source).length);
-        final speedup = percentChange(parser, events);
-        builder.element('parser', nest: parser.toStringAsFixed(6));
-        builder.element('events', nest: events.toStringAsFixed(6));
-        builder.element('speedup', nest: speedup.toStringAsFixed(2));
-      });
+      addBenchmark(builder, entry);
     }
   });
-  print(builder.buildDocument().toXmlString(pretty: true));
+}
+
+void addBenchmark(XmlBuilder builder, MapEntry<String, String> entry) {
+  builder.element('benchmark', attributes: {'name': entry.key}, nest: () {
+    final source = entry.value;
+    final parser = benchmark(() => XmlDocument.parse(source));
+    final stream = benchmark(() => const XmlEventDecoder().convert(source));
+    final iterator = benchmark(() => parseEvents(source).toList());
+    addMeasure(builder, 'parser', parser);
+    addMeasure(builder, 'stream', stream, parser);
+    addMeasure(builder, 'iterator', iterator, parser);
+  });
+}
+
+void addMeasure(XmlBuilder builder, String name, double measure,
+    [double? comparison]) {
+  builder.element('measure', attributes: {'name': name}, nest: () {
+    builder.element('time', nest: measure.toStringAsFixed(6));
+    if (comparison != null) {
+      final speedup = percentChange(measure, comparison);
+      builder.element('speedup', nest: speedup.toStringAsFixed(2));
+    }
+  });
 }
