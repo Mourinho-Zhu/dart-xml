@@ -67,9 +67,9 @@ void main() {
   final builder = XmlBuilder();
   builder.processing('xml', 'version="1.0"');
   builder.element('benchmarks', nest: () {
-    for (final name in benchmarks.keys) {
-      builder.element('measure', attributes: {'name': name}, nest: () {
-        final source = benchmarks[name];
+    for (final entry in benchmarks.entries) {
+      builder.element('measure', attributes: {'name': entry.key}, nest: () {
+        final source = entry.value;
         final parser = benchmark(() => XmlDocument.parse(source));
         final events = benchmark(() => parseEvents(source).length);
         final speedup = percentChange(parser, events);
